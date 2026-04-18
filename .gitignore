@@ -1,0 +1,9 @@
+# Ignore data directories and large files
+data/
+google_data/
+androzoo-metadata/
+*.env
+
+# Python cache files
+__pycache__/
+*.pyc
