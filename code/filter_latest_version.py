@@ -1,6 +1,8 @@
 import os
 import json
-
+"""
+根据版本筛选，保留最新版本的应用数据，剔除历史版本冗余记录。
+"""
 # 配置路径
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 input_file = os.path.join(base_dir, "data", "google_play_apps_post_2022.jsonl")

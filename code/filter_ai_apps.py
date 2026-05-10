@@ -2,7 +2,10 @@ import os
 import json
 import re
 import html
-
+"""
+AI 应用过滤器 - 基于关键词和模式的深度挖掘
+本脚本针对之前版本筛选出的 2022 年后发布的 Google Play 应用数据集，进行更深入的文本分析，挖掘出那些可能未被简单时间和版本筛选捕获的 AI 应用。
+"""
 # 配置路径
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 input_file = os.path.join(base_dir, "data", "google_play_apps_latest_post_2022.jsonl")
@@ -34,7 +37,7 @@ PATTERN_BROAD_AI = re.compile(
     re.IGNORECASE
 )
 
-# 传统/游戏 AI 排雷词表：如果匹配到这些，大概率是旧时代的游戏 NPC (打上标签，但不丢弃)
+# 传统/游戏 AI 排雷词表：如果匹配到这些，大概率是旧时代的游戏 NPC 
 PATTERN_TRADITIONAL_AI = re.compile(
     r'\b(ai opponent|ai enemy|ai bot|enemy ai|game ai|cpu opponent|computer opponent|versus ai|vs ai)\b', 
     re.IGNORECASE
@@ -106,12 +109,15 @@ def filter_ai_apps():
                     # 5. 负面标签打标检测 (判断是否是游戏中的传统 "AI 对手")
                     is_traditional = bool(PATTERN_TRADITIONAL_AI.search(clean_full_text))
                     
+                    # 过滤掉传统游戏 AI，直接不保存
+                    if is_traditional:
+                        continue
+                    
                     # 6. 为 JSON 附加一层我们的 AI 分析结果字典，方便后续数据集直接使用
                     record["ai_analysis_tags"] = {
                         "is_ai": True,
                         "strict_ai_matched": has_strict_ai,
-                        "broad_ai_matched": has_broad_ai,
-                        "is_traditional_game_ai": is_traditional
+                        "broad_ai_matched": has_broad_ai
                     }
                     
                     # 重新序列化并写入

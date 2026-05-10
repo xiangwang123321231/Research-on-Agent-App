@@ -3,7 +3,10 @@ import os
 import json
 import re
 from datetime import datetime
-
+"""
+根据日期筛选，保留 2022 年 11 月 1 日及之后上传的应用数据，剔除之前的历史版本冗余记录。
+注意：日期字段可能存在多种格式，且有些记录可能缺失日期字段。
+"""
 # 配置路径
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 input_file = os.path.join(base_dir, "androzoo-metadata", "gp-metadata-full.jsonl.gz")

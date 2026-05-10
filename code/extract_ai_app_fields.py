@@ -1,6 +1,11 @@
 import os
 import json
 
+"""
+精炼结构，提取出docid、descriptionHtml、recentChangesHtml三个字段
+目的：为后续大模型筛选提供更干净的输入文本，减少不必要的字段干扰。
+注意：descriptionHtml 和 recentChangesHtml 可能包含 HTML 标签，后续需要进行清洗处理。
+"""
 # 配置路径
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 input_file = os.path.join(base_dir, "data", "google_play_apps_ai_filtered.jsonl")

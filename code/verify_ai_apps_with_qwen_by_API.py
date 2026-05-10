@@ -24,7 +24,7 @@ input_file = os.path.join(base_dir, "data", "google_play_apps_ai_extracted.jsonl
 output_file = os.path.join(base_dir, "data", "google_play_apps_qwen_verified.jsonl")
 
 # 设定的模型名称
-MODEL_NAME = "qwen3.6-plus"
+MODEL_NAME = "qwen3.6-plus-2026-04-02"
 
 def check_is_ai_app(description, recent_changes):
     """调用 Qwen 模型检查应用是否属于 AI 应用"""
@@ -35,8 +35,8 @@ def check_is_ai_app(description, recent_changes):
         "注意：现阶段我们的筛选标准非常宽松，只要应用在描述或更新日志中自称是AI应用，"
         "或者稍微提及了其包含AI功能（如AI助手, AI生成, 机器学习等，即使可能是蹭热度或极为边缘的功能），"
         "都请判断为是AI应用（is_ai: true）。只有完全与AI无关的应用才填 false。"
-        "\n请只返回一个合法的 JSON 字符串，格式如下：\n"
-        '{"is_ai": true/false, "reason": "在此简要说明判断理由"}'
+        "\n为节省生成耗费的 Token，请只返回一个最简的 JSON 字符串，不需要任何解释理由，格式如下：\n"
+        '{"is_ai": true} 或 {"is_ai": false}'
     )
     
     user_prompt = f"应用介绍:\n{(description or '')[:3000]}\n\n最近更新:\n{(recent_changes or '')[:1000]}"
@@ -77,7 +77,9 @@ def verify_apps():
                 try:
                     data = json.loads(line)
                     processed_docids.add(data.get("docid"))
-                    if data.get("llm_verification", {}).get("is_ai"):
+                    # 兼容之前可能嵌套的格式和新的扁平格式
+                    is_ai = data.get("is_ai") if "is_ai" in data else data.get("llm_verification", {}).get("is_ai")
+                    if is_ai == "yes" or is_ai is True:
                         ai_app_count += 1
                 except:
                     pass
@@ -100,17 +102,26 @@ def verify_apps():
                 # 调用大模型验证
                 llm_result = check_is_ai_app(desc, changes)
                 
-                record["llm_verification"] = llm_result
+                # 如果遇到 API 错误 (例如 token 耗尽/限流)，直接停止执行，保留进度便于换 Key/模型后继续
+                if llm_result.get("is_ai") is None:
+                    print(f"\n[中止] API 出现错误，请检查 Key 或模型状态后重新运行代码进行续传。错误原因: {llm_result.get('reason')}")
+                    break
                 
-                # 写入结果
-                f_out.write(json.dumps(record, ensure_ascii=False) + "\n")
+                # 构建精简输出格式，仅保留 docid 和大模型验证结果(yes/no)
+                is_ai_str = "yes" if llm_result.get("is_ai") else "no"
+                output_record = {
+                    "docid": docid,
+                    "is_ai": is_ai_str
+                }
+                
+                # 写入精简结果
+                f_out.write(json.dumps(output_record, ensure_ascii=False) + "\n")
                 f_out.flush() # 实时保存，防止中断
                 
                 processed_count += 1
-                is_ai_zh = "是" if llm_result.get("is_ai") else "否"
-                if llm_result.get("is_ai"):
+                if is_ai_str == "yes":
                     ai_app_count += 1
-                print(f"[验证完成] 包名: {docid} -> 是否AI: {is_ai_zh} | 当前确认为AI的总数: {ai_app_count} | 理由: {llm_result.get('reason', '')[:30]}...")
+                print(f"[验证完成] 包名: {docid} -> {is_ai_str} | 当前确认为AI的总数: {ai_app_count}")
                 
                 # 为了防止触发 API 限流，可以稍微等待一下
                 time.sleep(0.5)
