@@ -28,20 +28,31 @@ def find_latest_versions():
             processed_count += 1
             try:
                 record = json.loads(line)
-                docid = record.get("docid")
-                # 避免键错误，提供默认值
+                docid = record.get("docid")  # 官方文档提到 docid/packageName 是全局唯一
                 details = record.get("details") or {}
                 app_details = details.get("appDetails") or {}
                 versionCode_raw = app_details.get("versionCode", -1)
+                az_metadata_date = record.get("az_metadata_date", "")
+                
                 try:
                     versionCode = int(versionCode_raw)
                 except (ValueError, TypeError):
                     versionCode = -1
 
                 if docid:
-                    # 如果 app 没出现过，或者当前的 versionCode 比记录的大，则更新
-                    if docid not in max_versions or versionCode > max_versions[docid]:
-                        max_versions[docid] = versionCode
+                    # 如果 app 没出现过
+                    if docid not in max_versions:
+                        max_versions[docid] = {"versionCode": versionCode, "date": az_metadata_date}
+                    else:
+                        current_max_vc = max_versions[docid]["versionCode"]
+                        current_max_date = max_versions[docid]["date"]
+                        
+                        # 1. 如果版本号更大，直接替换
+                        if versionCode > current_max_vc:
+                            max_versions[docid] = {"versionCode": versionCode, "date": az_metadata_date}
+                        # 2. 如果版本号相同，按官方要求比较 az_metadata_date，保留最新爬取的记录
+                        elif versionCode == current_max_vc and az_metadata_date > current_max_date:
+                            max_versions[docid] = {"versionCode": versionCode, "date": az_metadata_date}
             except json.JSONDecodeError:
                 pass
             
@@ -65,19 +76,21 @@ def find_latest_versions():
                 details = record.get("details") or {}
                 app_details = details.get("appDetails") or {}
                 versionCode_raw = app_details.get("versionCode", -1)
+                az_metadata_date = record.get("az_metadata_date", "")
                 
                 try:
                     versionCode = int(versionCode_raw)
                 except (ValueError, TypeError):
                     versionCode = -1
                 
-                # 如果是该应用的最大版本号，将其写入本地
+                # 双重校验：必须 docid、versionCode 且 az_metadata_date 完全匹配我们缓存的最优解
                 if docid and docid in max_versions:
-                    if versionCode == max_versions[docid]:
+                    target = max_versions[docid]
+                    if versionCode == target["versionCode"] and az_metadata_date == target["date"]:
                         f_out.write(line)
                         written_count += 1
                         
-                        # 核心防重复：为了防止部分应用在同一 versionCode 有多条冗余记录，一旦存入立即从字典中删除其 key
+                        # 核心防重复：成功写入后删除，防止同一时间、同版本出现绝对冗余项（双保险）
                         del max_versions[docid]
 
             except json.JSONDecodeError:

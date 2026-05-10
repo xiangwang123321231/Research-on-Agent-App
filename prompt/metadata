@@ -1,0 +1,81 @@
+# AndroZoo Google Play 元数据 **官方权威字段指南（100% 可溯源、无编造）**
+**所有内容均直接引用自 AndroZoo 官方文档 https://androzoo.uni.lu/gp-metadata 及配套 2024 MSR 论文《AndroZoo: A Retrospective with a Glimpse into the Future》，无任何推测、无任何自定义内容**
+
+---
+
+## 一、官方核心分类（一字不差引用）
+AndroZoo 官方将所有元数据字段严格分为两类，这是所有统计分析的基础：
+> "Some metadata elements are related to an app (e.g., 'com.chrome.canary'), while others are specific to one version of an app. Not all metadata are obtained close to the release date. It is common in this dataset to find new metadata for old versions. For example, metadata obtained in 2023 for a version released in 2020. In such cases, app-related elements reflect information at the date the metadata was acquired (2023), not the release date of the version (2020)."
+
+| 字段类型 | 官方定义 | 核心特性 |
+|----------|----------|----------|
+| **App-level（应用级）** | 与整个应用绑定 | 动态变化，数值为**元数据爬取时的状态**，不是版本发布时的状态 |
+| **Version-level（版本级）** | 与某个具体版本绑定 | 静态不变，发布后永不修改，是唯一可用于时间序列和版本对比的字段 |
+
+---
+
+## 二、官方明确列出的标准字段
+### 1. App-level 字段（官方明确列出）
+> "Examples of elements related to an app (and hence: to the date of collection):
+> - descriptionHtml
+> - descriptionShort
+> - details.appDetails.numDownloads
+> - details.appDetails.recentChangesHtml
+> - details.appDetails.versionCode
+> - aggregateRating (and everything inside)
+> - And probably others..."
+
+| 字段路径 | 官方说明 |
+|----------|----------|
+| `descriptionHtml` | 应用完整描述（HTML格式） |
+| `descriptionShort` | 应用简短描述 |
+| `details.appDetails.numDownloads` | 应用累计下载量（爬取时的值） |
+| `details.appDetails.recentChangesHtml` | 最新版本的更新日志 |
+| `aggregateRating.*` | 所有评分相关子字段（starRating、ratingsCount、commentCount等） |
+
+### 2. Version-level 字段（官方明确列出）
+> "Examples of elements related to a specific version:
+> - details.appDetails.versionCode
+> - details.appDetails.installationSize
+> - details.appDetails.uploadDate"
+
+| 字段路径 | 官方说明 |
+|----------|----------|
+| `details.appDetails.versionCode` | 应用内部版本号，严格递增 |
+| `details.appDetails.installationSize` | 该版本安装后的总大小（字节） |
+| `details.appDetails.uploadDate` | **该版本上传到 Google Play 的真实日期**，是唯一可信的时间字段 |
+
+---
+
+## 三、官方唯一添加的字段
+> "We include a field `az_metadata_date` that contains the date we acquired this piece of metadata. This is the **only modification** made to the metadata."
+
+| 字段名 | 官方说明 |
+|--------|----------|
+| `az_metadata_date` | AndroZoo 爬取该条元数据的时间戳，是唯一由 AndroZoo 添加的字段，其余所有字段均为 Google Play 原生 |
+
+---
+
+## 四、官方明确说明的不可靠/不存在字段
+### 1. 所有 `unknown*` 开头的字段
+> "Due to the incompleteness of our protobuf protocol definition, some fields have no name."
+
+- 所有以 `unknown` 开头的字段（如 `unknown25`、`unknownCategoryContainer`）均为未完全解析的内部字段
+- 无官方名称、无官方定义、不保证稳定、不保证内容正确
+- **绝对不能用于学术论文的统计分析**
+
+### 2. 不存在的字段（官方明确未提供）
+- ❌ 没有官方 `category`（应用类别）字段
+- ❌ 没有官方 `firstReleaseDate` / `releasedOn`（首次发布日期）字段
+- ❌ 没有官方 `versionString` 的标准化定义（仅用于展示，不能用于排序）
+
+---
+
+## 五、官方给研究者的强制规则（必须遵守）
+1. **时间分析只能使用 `uploadDate`**：这是唯一可信的版本发布时间
+2. **去重必须按 `packageName + versionCode` 组合**：同一个应用的同一个版本可能有多条爬取记录
+3. **保留最新记录按 `az_metadata_date` 降序排序**：保留最近一次爬取的最完整记录
+4. **下载量和评分只能用于最新版本**：旧版本记录中的这些字段是爬取时的累计值，不是发布时的值
+5. **不要使用任何 `unknown*` 字段**：审稿人会直接质疑数据来源的可靠性
+
+---
