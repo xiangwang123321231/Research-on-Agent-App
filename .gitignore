@@ -1,0 +1,14 @@
+# Track only the two code directories and these ignore rules.
+*
+!/.gitignore
+!/analysis/
+!/analysis/.gitignore
+!/analysis/code/
+!/analysis/code/**
+!/google_play_dataset/
+!/google_play_dataset/code/
+!/google_play_dataset/code/**
+
+# Generated Python caches are not source code.
+__pycache__/
+*.py[cod]

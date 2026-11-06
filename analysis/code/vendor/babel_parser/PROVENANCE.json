@@ -1,0 +1,12 @@
+{
+  "name": "@babel/parser",
+  "version": "7.26.7",
+  "license": "MIT",
+  "source": "Existing local @vue/cli dependency; copied unchanged",
+  "upstream": "https://github.com/babel/babel/tree/v7.26.7/packages/babel-parser",
+  "files": {
+    "index.cjs": "f5bde768b68e921be53758dcee60427d531e5a022eeab5a899db6b923403cd6d",
+    "LICENSE": "2e97627cb278aa7556fb9e8817368302301a595b6c7582512b8d74c57b773652",
+    "upstream_package.json": "802d0b324937b6d8d3feae0882b79e62c4fa4d5c8c6fb9533aee9088755a6e7a"
+  }
+}

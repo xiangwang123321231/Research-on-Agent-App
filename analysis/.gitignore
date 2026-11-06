@@ -1,0 +1,9 @@
+# Track only source code and this ignore file.
+/*
+!/.gitignore
+!/code/
+!/code/**
+
+# Generated Python caches are not source code.
+__pycache__/
+*.py[cod]

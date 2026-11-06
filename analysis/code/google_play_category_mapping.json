@@ -1,0 +1,27 @@
+{
+  "version": "research-broad-categories-v1",
+  "description": "Google Play categories grouped for RQ2. Educational games remain games. Preserve original category IDs alongside these research-defined groups.",
+  "groups": {
+    "education": {"label_zh": "教育", "category_ids": ["EDUCATION"]},
+    "games": {"label_zh": "游戏", "category_ids": ["GAME", "GAME_ACTION", "GAME_ADVENTURE", "GAME_ARCADE", "GAME_BOARD", "GAME_CARD", "GAME_CASINO", "GAME_CASUAL", "GAME_EDUCATIONAL", "GAME_MUSIC", "GAME_PUZZLE", "GAME_RACING", "GAME_ROLE_PLAYING", "GAME_SIMULATION", "GAME_SPORTS", "GAME_STRATEGY", "GAME_TRIVIA", "GAME_WORD"]},
+    "office": {"label_zh": "办公", "category_ids": ["BUSINESS", "PRODUCTIVITY"]},
+    "health": {"label_zh": "医疗健康", "category_ids": ["MEDICAL", "HEALTH_AND_FITNESS"]},
+    "social": {"label_zh": "社交通讯", "category_ids": ["SOCIAL", "COMMUNICATION", "DATING"]},
+    "entertainment": {"label_zh": "娱乐", "category_ids": ["ENTERTAINMENT", "COMICS"]},
+    "finance": {"label_zh": "金融", "category_ids": ["FINANCE"]},
+    "shopping": {"label_zh": "购物", "category_ids": ["SHOPPING"]},
+    "travel": {"label_zh": "出行与旅游", "category_ids": ["TRAVEL_AND_LOCAL", "MAPS_AND_NAVIGATION", "AUTO_AND_VEHICLES"]},
+    "food": {"label_zh": "美食", "category_ids": ["FOOD_AND_DRINK"]},
+    "reading": {"label_zh": "阅读与资讯", "category_ids": ["BOOKS_AND_REFERENCE", "NEWS_AND_MAGAZINES"]},
+    "media": {"label_zh": "影音", "category_ids": ["MUSIC_AND_AUDIO", "VIDEO_PLAYERS"]},
+    "visual": {"label_zh": "图像与设计", "category_ids": ["ART_AND_DESIGN", "PHOTOGRAPHY"]},
+    "personalization": {"label_zh": "个性化", "category_ids": ["PERSONALIZATION"]},
+    "lifestyle": {"label_zh": "生活服务", "category_ids": ["LIFESTYLE", "BEAUTY"]},
+    "home": {"label_zh": "家居", "category_ids": ["HOUSE_AND_HOME"]},
+    "parenting": {"label_zh": "育儿", "category_ids": ["PARENTING"]},
+    "events": {"label_zh": "活动", "category_ids": ["EVENTS"]},
+    "sports": {"label_zh": "体育", "category_ids": ["SPORTS"]},
+    "weather": {"label_zh": "天气", "category_ids": ["WEATHER"]},
+    "tools": {"label_zh": "工具", "category_ids": ["TOOLS", "LIBRARIES_AND_DEMO"]}
+  }
+}
