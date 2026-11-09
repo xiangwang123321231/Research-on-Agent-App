@@ -27,7 +27,7 @@ from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from sklearn.model_selection import StratifiedKFold
 
-from feature_vectorizer import FEATURE_SCHEMA_VERSION, FeatureVectorizer
+from feature_vectorizer_59d import FEATURE_SCHEMA_VERSION, FeatureVectorizer
 from feature_contract import validate_records
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -269,7 +269,8 @@ def validate_signal_source(signals: Path, feature_manifest: dict, paths, names, 
         raise ValueError("Signals require valid, unique APK content SHA-256 values.")
     refresh = any(r.get("metadata", {}).get("feature_schema_version") != FEATURE_SCHEMA_VERSION
                   for r in records)
-    contract = validate_records(records, allow_feature_refresh=refresh)
+    contract = validate_records(records, allow_feature_refresh=refresh,
+                                feature_schema_version=FEATURE_SCHEMA_VERSION)
     if feature_manifest.get("contract") != contract or feature_manifest.get("feature_names") != names:
         raise ValueError("Feature manifest contract/names do not match current signal interpretation.")
     derivation = feature_manifest.get("derivation")

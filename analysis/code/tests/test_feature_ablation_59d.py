@@ -24,7 +24,7 @@ from feature_contract import validate_records
 
 
 def fixture(directory, *, constant=True):
-    contract = validate_records([])
+    contract = validate_records([], feature_schema_version=run.FEATURE_SCHEMA_VERSION)
     old = {**contract, "feature_schema_version": "features-57d-v2026.10.24.1"}
     # Constant vectors and five equally represented classes exercise empty
     # paired-case output without mock estimators or changing the frozen model.

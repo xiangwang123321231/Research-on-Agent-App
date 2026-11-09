@@ -23,7 +23,7 @@ from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
 from sklearn.model_selection import StratifiedKFold
 
 from feature_contract import validate_records
-from feature_vectorizer import FeatureVectorizer
+from feature_vectorizer_59d import FEATURE_SCHEMA_VERSION, FeatureVectorizer
 
 ROOT = Path(__file__).resolve().parent.parent
 LABELS = ["is_direct_client", "is_server_proxy", "is_webview", "is_local", "is_non_ai"]
@@ -153,7 +153,8 @@ def audit(run, destination, jobs):
     source_versions = {r["metadata"]["feature_schema_version"] for r in records}
     target = feature_manifest["contract"]["feature_schema_version"]
     refresh = source_versions != {target}
-    contract = validate_records(records, allow_feature_refresh=refresh)
+    contract = validate_records(records, allow_feature_refresh=refresh,
+                                feature_schema_version=FEATURE_SCHEMA_VERSION)
     if refresh or feature_manifest.get("derivation"):
         derivation = feature_manifest["derivation"]
         assert len(source_versions) == 1

@@ -1,4 +1,4 @@
-"""Feature vectorizer — 59-dimensional numerical feature vector.
+"""Feature vectorizer — 60-dimensional numerical feature vector.
 
 Every feature is computed from observed signals and metadata only.
 No embedding-mode category is used in feature computation.
@@ -30,9 +30,14 @@ from feature_evidence import (related_web_observation, typed_web_observation,
                               llm_operation_reference)
 from device_feature_evidence import (generation_configuration, model_binary_artifact,
                                      generation_interface)
+from feature_evidence import occurrences
+from semantic_feature_evidence import (
+    isolated_occurrence, web_frontend_llm_observation,
+    business_llm_route_observation, llm_protocol_structure_reference,
+)
 
 
-FEATURE_SCHEMA_VERSION = "features-59d-v2026.10.25.1"
+FEATURE_SCHEMA_VERSION = "features-60d-v2026.11.06.2"
 
 
 def _collapse_model_feature_facts(signals: list[dict]) -> list[dict]:
@@ -81,7 +86,7 @@ def _collapse_model_feature_facts(signals: list[dict]) -> list[dict]:
 
 
 class FeatureVectorizer:
-    """59-dimensional feature vector from neutral APK signals.
+    """60-dimensional feature vector from neutral APK signals.
 
     All features are deterministic — no ``fit()`` step required.
     """
@@ -248,7 +253,6 @@ class FeatureVectorizer:
             })
 
         cg = metadata.get("callgraph", {}) or {}
-        lc = metadata.get("layer_coverage", {}) or {}
 
         # ═══════════════════════════════════════════════════════════
         # Group 1 — Signal density (3 dims)
@@ -415,39 +419,37 @@ class FeatureVectorizer:
         v.append(math.log1p(int(cg.get("custom_domain_llm_near_http", 0) or 0))) # f48
 
         # ═══════════════════════════════════════════════════════════
-        # Group 13 — Metadata & degradation (4 dims)
+        # APK size remains; ZIP/source counts and tool status are audit metadata only.
         # ═══════════════════════════════════════════════════════════
 
         v.append(math.log(max(int(metadata.get("size_bytes", 1)), 1)))   # f49
-        entries = metadata.get("entries", 0) or 0
-        v.append(math.log(max(int(entries), 1)))                         # f50
-        app_java_files = lc.get("jadx_app_source_files")
-        if app_java_files is None:
-            # Backward compatibility for JSONL generated before the scoped
-            # count was added.  New records always use the app-scoped value.
-            app_java_files = lc.get("jadx_source_files", 0)
-        v.append(float(int(app_java_files or 0)))                        # f51
-        jadx_status = str(metadata.get("jadx_status") or "").lower()
-        if jadx_status:
-            jadx_ok = jadx_status in {"success", "partial"}
-        else:
-            # Backward compatibility for JSONL generated before status was
-            # recorded.  New records use the explicit status above.
-            jadx_ok = bool(metadata.get("jadx_available"))
-        v.append(0.0 if jadx_ok else 1.0)                                # f52
 
         # Independent facts, not category rules or APK-wide conjunctions.
         # Configuration and reference never imply that weights are bundled.
-        v.append(float(any(generation_configuration(s) for s in feature_signals))) # f53
-        v.append(float(any(model_binary_artifact(s) for s in feature_signals)))    # f54
-        v.append(float(has(SignalType.MODEL_FILE_REFERENCE)))                     # f55
-        v.append(float(any(generation_interface(s) for s in feature_signals)))    # f56
-        v.append(float(any(generation_interface(s, call=True) for s in feature_signals))) # f57
+        v.append(float(any(generation_configuration(s) for s in feature_signals))) # f50
+        v.append(float(any(model_binary_artifact(s) for s in feature_signals)))    # f51
+        v.append(float(has(SignalType.MODEL_FILE_REFERENCE)))                     # f52
+        v.append(float(any(generation_interface(s) for s in feature_signals)))    # f53
+        v.append(float(any(generation_interface(s, call=True) for s in feature_signals))) # f54
 
         # Preserve reference vs. interface-use semantics without adding raw
         # matches or requiring a complete application call chain.
-        v.append(float(any(programmatic_llm_usage(s) for s in feature_signals)))  # f58
-        v.append(float(any(llm_operation_reference(s) for s in feature_signals))) # f59
+        v.append(float(any(programmatic_llm_usage(s) for s in feature_signals)))  # f55
+        v.append(float(any(llm_operation_reference(s) for s in feature_signals))) # f56
+
+        # Qualify each occurrence before reading its source/proof. The other
+        # 56 retained facts keep their admission, values and positional order.
+        instances = []
+        for signal in merged_signals:
+            for instance in occurrences(signal):
+                single = isolated_occurrence(signal, instance)
+                if feature_eligible(single):
+                    instances.append(single)
+        v.append(float(web_frontend_llm_observation(instances, metadata)))       # f57
+        v.append(float(any(business_llm_route_observation(s) for s in instances))) # f58
+        v.append(float(any(llm_protocol_structure_reference(s) for s in instances))) # f59
+        v.append(float(has(SignalType.NATIVE_LLM_LIBRARY)
+                       or any(generation_interface(s) for s in feature_signals))) # f60
 
         return v
 
@@ -529,16 +531,17 @@ class FeatureVectorizer:
             "f46_reachable_native_jni_pairs",
             "f47_reachable_schema_http_pairs",
             "f48_reachable_custom_http_pairs",
-            # Group 11 — Metadata & degradation
+            # Continuous IDs follow positional order; only names changed in v60d.2
             "f49_apk_size_log",
-            "f50_zip_entries_log",
-            "f51_jadx_source_file_count",
-            "f52_jadx_failed",
-            "f53_generation_config_present",
-            "f54_model_binary_artifact_present",
-            "f55_model_file_reference_present",
-            "f56_on_device_generation_interface_present",
-            "f57_on_device_generation_call_present",
-            "f58_programmatic_llm_usage_present",
-            "f59_llm_operation_reference_present",
+            "f50_generation_config_present",
+            "f51_model_binary_artifact_present",
+            "f52_model_file_reference_present",
+            "f53_on_device_generation_interface_present",
+            "f54_on_device_generation_call_present",
+            "f55_programmatic_llm_usage_present",
+            "f56_llm_operation_reference_present",
+            "f57_web_frontend_llm_observation_present",
+            "f58_business_llm_route_observation_present",
+            "f59_llm_protocol_structure_reference_present",
+            "f60_dedicated_device_stack_present",
         )

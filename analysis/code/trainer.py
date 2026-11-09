@@ -186,9 +186,10 @@ def _make_rf():
 
 def _make_extratrees():
     from sklearn.ensemble import ExtraTreesClassifier
-    # Researcher adopted the fixed 52-feature 6/8/2 configuration on 2026-10-11.
+    # Researcher adopted leaf=1, max_features=6 on 2026-11-06 after the
+    # fixed-60d comparison. Historical ablations retain their frozen leaf=2.
     return ExtraTreesClassifier(
-        n_estimators=300, max_depth=8, min_samples_leaf=2,
+        n_estimators=300, max_depth=8, min_samples_leaf=1,
         class_weight="balanced", max_features=6,
         random_state=42, n_jobs=-1,
     )

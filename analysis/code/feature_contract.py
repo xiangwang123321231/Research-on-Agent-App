@@ -6,10 +6,12 @@ from feature_vectorizer import FEATURE_SCHEMA_VERSION
 from registry import SIGNAL_SCHEMA_VERSION, EVIDENCE_REGISTRY_VERSION
 
 
-def validate_records(records: list[dict], *, allow_feature_refresh: bool = False) -> dict:
+def validate_records(records: list[dict], *, allow_feature_refresh: bool = False,
+                     feature_schema_version: str = FEATURE_SCHEMA_VERSION) -> dict:
+    """Validate signal contracts; frozen studies explicitly supply their schema."""
     from apk_llm_analysis import EXTRACTOR_VERSION
     expected = {"extractor_version": EXTRACTOR_VERSION, "signal_schema_version": SIGNAL_SCHEMA_VERSION,
-                "signal_registry_version": EVIDENCE_REGISTRY_VERSION, "feature_schema_version": FEATURE_SCHEMA_VERSION}
+                "signal_registry_version": EVIDENCE_REGISTRY_VERSION, "feature_schema_version": feature_schema_version}
     source_feature_versions = set()
     checked = expected if not allow_feature_refresh else {
         k: v for k, v in expected.items() if k != 'feature_schema_version'}
@@ -20,6 +22,12 @@ def validate_records(records: list[dict], *, allow_feature_refresh: bool = False
             if not isinstance(feature_version, str) or not feature_version.startswith('features-'):
                 raise ValueError("Feature refresh requires an explicit source feature version.")
             source_feature_versions.add(feature_version)
+        if (not allow_feature_refresh
+                and isinstance(feature_version, str)
+                and feature_version != feature_schema_version
+                and all(metadata.get(k) == v for k, v in expected.items()
+                        if k != 'feature_schema_version')):
+            raise ValueError("Only the feature schema differs; use export_features.py --revectorize to recompute saved signals without APK re-extraction.")
         if any(metadata.get(k) != v for k, v in checked.items()):
             raise ValueError("Input signals have an old, missing or incompatible version; re-extract into a new output directory.")
     if allow_feature_refresh and len(source_feature_versions) != 1:
